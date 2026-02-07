@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Vaishavi Canteen System</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI,sans-serif;
+  background:linear-gradient(rgba(15,23,42,.85),rgba(15,23,42,.85)),
+  url("https://images.unsplash.com/photo-1600891964599-f61ba0e24092");
+  background-size:cover;
+  background-attachment:fixed;
+  color:white;
+}
+
+header{text-align:center;padding:25px}
+nav{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+
+nav button{
+  padding:10px 18px;
+  border:none;
+  border-radius:20px;
+  background:#6366f1;
+  color:white;
+  cursor:pointer;
+}
+
+section{display:none;padding:25px}
+.active{display:block}
+
+.glass{
+  background:rgba(255,255,255,.12);
+  padding:20px;
+  border-radius:18px;
+  margin-bottom:15px;
+}
+
+.menu{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:20px;
+}
+
+.card{
+  background:rgba(255,255,255,.15);
+  border-radius:18px;
+  overflow:hidden;
+  text-align:center;
+}
+
+.card img{
+  width:100%;
+  height:160px;
+  object-fit:cover;
+}
+
+.card button{
+  margin:6px;
+  padding:7px 14px;
+  border:none;
+  border-radius:16px;
+  cursor:pointer;
+}
+
+.add{background:#22c55e}
+.remove{background:#ef4444;color:white}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:8px;
+  border-bottom:1px solid rgba(255,255,255,.3);
+  text-align:center;
+}
+
+#paymentModal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+
+.modal{
+  background:#0f172a;
+  padding:25px;
+  border-radius:20px;
+  width:320px;
+  text-align:center;
+}
+
+#qr{
+  display:none;
+  margin:10px auto;
+}
+
+@media print{
+ nav,button,#paymentModal{display:none}
+ body{background:white;color:black}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>🍽️ Vaishavi Canteen</h1>
+<p>Digital Ordering • Billing • Payment</p>
+</header>
+
+<nav>
+<button onclick="showPage('home')">Home</button>
+<button onclick="showPage('menu')">Menu</button>
+<button onclick="showPage('cart')">Cart (<span id="cartCount">0</span>)</button>
+<button onclick="showPage('bill')">Bill</button>
+<button onclick="showPage('admin')">Admin</button>
+</nav>
+
+<section id="home" class="active">
+<div class="glass" style="text-align:center">
+<h1>Welcome to Vaishavi Canteen</h1>
+<p>Fast • Secure • Contactless Ordering</p>
+<button onclick="showPage('menu')">Order Now</button>
+</div>
+</section>
+
+<section id="menu">
+<h2>Menu</h2>
+<div class="menu" id="menuList"></div>
+</section>
+
+<section id="cart">
+<h2>Your Cart</h2>
+<div id="cartItems"></div>
+<div class="glass" style="text-align:right">
+<h3>Total: ₹<span id="cartTotal">0</span></h3>
+<button onclick="openPayment()">Pay Now</button>
+</div>
+</section>
+
+<section id="bill">
+<div class="glass">
+<h2 style="text-align:center">🧾 Vaishavi Canteen Bill</h2>
+<p>Order ID: #<span id="orderId"></span></p>
+<p>Date & Time: <span id="billTime"></span></p>
+<p>Payment Mode: <span id="billMode"></span></p>
+
+<table>
+<thead>
+<tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+</thead>
+<tbody id="billBody"></tbody>
+</table>
+
+<h3 style="text-align:right">Grand Total: ₹<span id="billTotal"></span></h3>
+<button onclick="window.print()">Print Bill</button>
+</div>
+</section>
+
+<section id="admin">
+<div class="glass">
+<h2>Admin Panel</h2>
+<p>Total Orders: <span id="totalOrders">0</span></p>
+<p>Total Revenue: ₹<span id="totalRevenue">0</span></p>
+<div id="orderList"></div>
+</div>
+</section>
+
+<div id="paymentModal">
+<div class="modal">
+<h3>Select Payment</h3>
+<button onclick="pay('UPI')">UPI</button>
+<button onclick="pay('Cash')">Cash</button>
+
+<img id="qr"
+src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=vaishavi@upi">
+
+<p id="payText"></p>
+</div>
+</div>
+
+<script>
+const foods=[
+{name:"Veg Burger",price:40,img:"https://images.unsplash.com/photo-1550547660-d9450f859349"},
+{name:"Cheese Pizza",price:60,img:"https://images.unsplash.com/photo-1601924582975-7e67069c62b6"},
+{name:"Sandwich",price:30,img:"https://images.unsplash.com/photo-1528735602780-2552fd46c7af"},
+{name:"Samosa",price:15,img:"https://images.unsplash.com/photo-1601050690597-df0568f70950"},
+{name:"Pasta",price:50,img:"https://images.unsplash.com/photo-1589302168068-964664d93dc0"},
+{name:"Cold Coffee",price:25,img:"https://images.unsplash.com/photo-1511920170033-f8396924c348"},
+{name:"Tea",price:10,img:"https://images.unsplash.com/photo-1509042239860-f550ce710b93"},
+{name:"French Fries",price:35,img:"https://images.unsplash.com/photo-1573080496219-bb080dd4f877"},
+{name:"Noodles",price:45,img:"https://images.unsplash.com/photo-1585032226651-759b368d7246"},
+{name:"Fried Rice",price:55,img:"https://images.unsplash.com/photo-1604908177522-4325c70bfa36"}
+];
+
+let cart=[];
+let orders=[];
+let lastOrder=null;
+let totalOrders=0;
+let totalRevenue=0;
+
+/* NAV */
+function showPage(id){
+ document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ if(id==="cart") renderCart();
+ if(id==="bill") renderBill();
+ if(id==="admin") renderAdmin();
+}
+
+/* MENU */
+function loadMenu(){
+ const m=document.getElementById("menuList");
+ foods.forEach((f,i)=>{
+  m.innerHTML+=`
+  <div class="card">
+   <img src="${f.img}">
+   <h3>${f.name}</h3>
+   <p>₹${f.price}</p>
+   <button class="add" onclick="addToCart(${i})">Add to Cart</button>
+  </div>`;
+ });
+}
+
+function addToCart(i){
+ cart.push(foods[i]);
+ updateCount();
+}
+
+/* CART */
+function renderCart(){
+ const d=document.getElementById("cartItems");
+ let total=0;
+ d.innerHTML="";
+ cart.forEach((item,index)=>{
+  total+=item.price;
+  d.innerHTML+=`
+  <div class="glass">
+   ${item.name} - ₹${item.price}
+   <button class="remove" onclick="removeFromCart(${index})">Remove</button>
+  </div>`;
+ });
+ document.getElementById("cartTotal").innerText=total;
+}
+
+function removeFromCart(i){
+ cart.splice(i,1);
+ updateCount();
+ renderCart();
+}
+
+/* PAYMENT */
+function openPayment(){
+ if(cart.length===0) return;
+ document.getElementById("paymentModal").style.display="flex";
+ document.getElementById("qr").style.display="none";
+ document.getElementById("payText").innerText="";
+}
+
+function pay(mode){
+ document.getElementById("payText").innerText="Processing payment...";
+ if(mode==="UPI"){
+  document.getElementById("qr").style.display="block";
+ }
+ setTimeout(()=>completePayment(mode),2500);
+}
+
+function completePayment(mode){
+ const total=Number(document.getElementById("cartTotal").innerText);
+
+ lastOrder={
+  id:orders.length+1,
+  time:new Date().toLocaleString(),
+  mode:mode,
+  items:[...cart],
+  total:total
+ };
+
+ orders.push(lastOrder);
+ totalOrders++;
+ totalRevenue+=total;
+
+ cart=[];
+ updateCount();
+
+ document.getElementById("paymentModal").style.display="none";
+ showPage("bill");
+}
+
+/* BILL */
+function renderBill(){
+ if(!lastOrder) return;
+
+ document.getElementById("orderId").innerText=lastOrder.id;
+ document.getElementById("billTime").innerText=lastOrder.time;
+ document.getElementById("billMode").innerText=lastOrder.mode;
+ document.getElementById("billTotal").innerText=lastOrder.total;
+
+ const body=document.getElementById("billBody");
+ body.innerHTML="";
+ const map={};
+
+ lastOrder.items.forEach(i=>{
+  map[i.name]=(map[i.name]||{p:i.price,q:0});
+  map[i.name].q++;
+ });
+
+ for(let k in map){
+  body.innerHTML+=`
+  <tr>
+   <td>${k}</td>
+   <td>${map[k].q}</td>
+   <td>${map[k].p}</td>
+   <td>${map[k].p*map[k].q}</td>
+  </tr>`;
+ }
+}
+
+/* ADMIN */
+function renderAdmin(){
+ document.getElementById("totalOrders").innerText=totalOrders;
+ document.getElementById("totalRevenue").innerText=totalRevenue;
+
+ const d=document.getElementById("orderList");
+ d.innerHTML="";
+ orders.forEach(o=>{
+  let items="";
+  const map={};
+  o.items.forEach(i=>{
+   map[i.name]=(map[i.name]||0)+1;
+  });
+  for(let k in map){
+   items+=`${k} x ${map[k]}<br>`;
+  }
+  d.innerHTML+=`
+  <div class="glass">
+   <strong>Order #${o.id}</strong><br>
+   ${o.time}<br>
+   Mode: ${o.mode}<br>
+   ${items}
+   <strong>Total: ₹${o.total}</strong>
+  </div>`;
+ });
+}
+
+function updateCount(){
+ document.getElementById("cartCount").innerText=cart.length;
+}
+
+loadMenu();
+updateCount();
+</script>
+
+</body>
+</html>
