@@ -5,31 +5,69 @@
 <title>Smart Multi Canteen</title>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#0f172a;color:white}
-header{text-align:center;padding:20px}
-select{padding:10px;border-radius:10px}
+body{
+ margin:0;
+ font-family:sans-serif;
+ color:white;
+ background:
+ linear-gradient(rgba(15,23,42,0.85), rgba(15,23,42,0.85)),
+ url("https://images.unsplash.com/photo-1498654896293-37aacf113fd9");
+ background-size:cover;
+ background-position:center;
+ background-attachment:fixed;
+}
 
-nav{text-align:center}
+/* LOGIN */
+#loginBox{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ height:100vh;
+ flex-direction:column;
+}
+
+/* INPUT */
+input,select,textarea{
+ padding:10px;
+ margin:5px;
+ border-radius:10px;
+ border:none;
+}
+
+/* NAV */
+nav{text-align:center;margin-top:10px}
 nav button{
- margin:5px;padding:10px;border:none;
- background:#6366f1;color:white;border-radius:10px;
+ margin:5px;
+ padding:10px;
+ border:none;
+ background:#6366f1;
+ color:white;
+ border-radius:10px;
  cursor:pointer;
 }
 
+/* SECTIONS */
 section{display:none;padding:20px}
-.active{display:block}
 
-.glass{background:#1e293b;padding:15px;border-radius:15px;margin:10px 0}
-
+/* DASHBOARD */
 .dashboard{
  display:grid;
  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
  gap:15px;
 }
 
-.highlight{background:#22c55e;padding:15px;border-radius:15px}
-.warning{background:#ef4444;padding:15px;border-radius:15px}
+.glass,.highlight,.warning{
+ backdrop-filter:blur(10px);
+ box-shadow:0 4px 20px rgba(0,0,0,0.5);
+ padding:15px;
+ border-radius:15px;
+}
 
+.glass{background:rgba(30,41,59,0.7)}
+.highlight{background:rgba(34,197,94,0.7)}
+.warning{background:rgba(239,68,68,0.7)}
+
+/* MENU */
 .menu{
  display:grid;
  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
@@ -37,31 +75,56 @@ section{display:none;padding:20px}
 }
 
 .card{
- background:#1e293b;border-radius:15px;text-align:center;padding:10px;
+ background:rgba(30,41,59,0.8);
+ padding:10px;
+ border-radius:15px;
+ text-align:center;
 }
 
 .card img{
- width:100%;height:140px;object-fit:cover;border-radius:10px;
+ width:100%;
+ height:140px;
+ object-fit:cover;
+ border-radius:10px;
 }
 
-.add{background:#22c55e;border:none;color:white;padding:6px;border-radius:8px}
-.remove{background:red;border:none;color:white;padding:6px;border-radius:8px}
+/* SUPPORT */
+#supportSection{
+ background:rgba(2,6,23,0.9);
+ text-align:center;
+ padding:15px;
 
-#paymentModal{
- position:fixed;inset:0;background:rgba(0,0,0,.7);
- display:none;justify-content:center;align-items:center;
+ margin-top:50px;   /* ⬅️ increased space from dashboard */
+ margin-bottom:30px; /* ⬅️ little space at bottom */
+
+ max-width:400px;
+ margin-left:auto;
+ margin-right:auto;
+
+ border-top:2px solid #6366f1;
+ border-radius:15px;
 }
-
-.modal{background:#111827;padding:20px;border-radius:15px;text-align:center}
-#qr{display:none;margin-top:10px}
 </style>
 </head>
 
 <body>
 
-<header>
-<h1 id="title">🍽️ Vaishavi Canteen</h1>
-<select id="canteenSelect">
+<!-- LOGIN -->
+<div id="loginBox">
+<h2>Login</h2>
+<input id="loginUsername" placeholder="Username">
+<input id="loginPassword" type="password" placeholder="Password">
+<button onclick="doLogin()">Login</button>
+</div>
+
+<!-- MAIN -->
+<div id="mainApp" style="display:none;">
+
+<header style="text-align:center;padding:20px;">
+<h1 id="title">🍽️ Select Canteen</h1>
+
+<select id="canteenSelect" onchange="setCanteen()">
+<option value="">Select Canteen</option>
 <option>Vaishavi</option>
 <option>Sweet n Treat</option>
 <option>Hangers Point</option>
@@ -69,37 +132,29 @@ section{display:none;padding:20px}
 </header>
 
 <nav>
-<button onclick="show('home')">Home</button>
-<button onclick="show('menu')">Menu</button>
-<button onclick="show('cart')">Cart (<span id="count">0</span>)</button>
-<button onclick="show('bill')">Bill</button>
-<button onclick="show('admin')">Admin</button>
+<button onclick="showSection('home')">Home</button>
+<button onclick="showSection('menu')">Menu</button>
+<button id="cartBtn" onclick="showSection('cart')">Cart (<span id="count">0</span>)</button>
+<button id="billBtn" onclick="showSection('bill')">Bill</button>
+<button id="adminBtn" onclick="showSection('admin')" style="display:none;">Admin</button>
+<button onclick="logout()">Logout</button>
 </nav>
 
 <!-- HOME -->
-<section id="home" class="active">
+<section id="home">
 <div class="dashboard">
-
-<div class="glass">
-<h3>⏰ Busy Time</h3>
-<p id="busyTime">--</p>
+<div class="glass"><h3>⏰ Busy Time</h3><p id="busyTime">--</p></div>
+<div class="warning"><h3>🔥 Busy Level</h3><p id="busyLevel">--</p></div>
+<div class="highlight"><h3>🍔 Most Selling Food</h3><p id="topFood">--</p></div>
+<div class="glass"><h3>🔮 Prediction</h3><p id="prediction">--</p></div>
 </div>
 
-<div class="warning">
-<h3>🔥 Busy Level</h3>
-<p id="busyLevel">--</p>
-</div>
-
-<div class="highlight">
-<h3>🍔 Most Selling Food</h3>
-<p id="topFood">--</p>
-</div>
-
-<div class="glass">
-<h3>🔮 Prediction</h3>
-<p id="prediction">--</p>
-</div>
-
+<div id="supportSection">
+<h3>🤝 Connect With Us</h3>
+<input id="supportName" placeholder="Your Name">
+<input id="supportEmail" placeholder="Your Email">
+<textarea id="supportMsg" placeholder="Your Message"></textarea>
+<button onclick="sendSupport()">Send</button>
 </div>
 </section>
 
@@ -114,215 +169,218 @@ section{display:none;padding:20px}
 <h2>Cart</h2>
 <div id="cartItems"></div>
 <h3>Total ₹<span id="total">0</span></h3>
-<button onclick="payOpen()">Pay</button>
+<button onclick="pay()">Pay</button>
 </section>
 
 <!-- BILL -->
 <section id="bill">
 <h2>Bill</h2>
-<p id="billName"></p>
-<p>Date: <span id="time"></span></p>
-<p>Mode: <span id="mode"></span></p>
-<div id="billItems"></div>
-<h3>Total ₹<span id="billTotal"></span></h3>
+<div id="billContent"></div>
+<button onclick="downloadPDF()">Download PDF</button>
 </section>
 
 <!-- ADMIN -->
 <section id="admin">
-<h2>Admin</h2>
+<div class="dashboard">
+<div class="glass"><h3>⏰ Busy Time</h3><p id="busyTimeAdmin">--</p></div>
+<div class="warning"><h3>🔥 Busy Level</h3><p id="busyLevelAdmin">--</p></div>
+<div class="highlight"><h3>🍔 Most Selling Food</h3><p id="topFoodAdmin">--</p></div>
+<div class="glass"><h3>🔮 Prediction</h3><p id="predictionAdmin">--</p></div>
+</div>
+
+<div class="warning">
+<h3>⚠️ Food Causing Shortage</h3>
+<p id="shortageFood">--</p>
+</div>
+
+<h3>Orders</h3>
 <div id="orders"></div>
 </section>
 
-<!-- PAYMENT -->
-<div id="paymentModal">
-<div class="modal">
-<h3>Payment</h3>
-<button onclick="pay('UPI')">UPI</button>
-<button onclick="pay('Cash')">Cash</button>
-<img id="qr" width="150"
-src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay">
-<p id="payText"></p>
-</div>
 </div>
 
 <script>
 
-/* GLOBAL */
-let currentCanteen="Vaishavi";
-let cart=[],ordersData=[],lastOrder=null;
-
-/* KEY */
-function key(n){return currentCanteen+"_"+n}
-
-/* LOAD */
-function load(){
- cart=JSON.parse(localStorage.getItem(key("cart")))||[];
- ordersData=JSON.parse(localStorage.getItem(key("orders")))||[];
- lastOrder=JSON.parse(localStorage.getItem(key("last")))||null;
- update();
- renderCart();
- calculateInsights();
-}
-
-/* SAVE */
-function save(){
- localStorage.setItem(key("cart"),JSON.stringify(cart));
- localStorage.setItem(key("orders"),JSON.stringify(ordersData));
- localStorage.setItem(key("last"),JSON.stringify(lastOrder));
-}
-
-/* SWITCH */
-canteenSelect.onchange=function(){
- currentCanteen=this.value;
- title.innerText="🍽️ "+currentCanteen+" Canteen";
- load();
-}
-
-/* FOOD */
-const foods=[
-{name:"Burger",price:40,img:"https://images.unsplash.com/photo-1550547660-d9450f859349"},
-{name:"Pizza",price:60,img:"https://images.unsplash.com/photo-1601924582975-7e67069c62b6"},
-{name:"Samosa",price:15,img:"https://images.unsplash.com/photo-1601050690597-df0568f70950"},
-{name:"Tea",price:10,img:"https://images.unsplash.com/photo-1509042239860-f550ce710b93"},
-{name:"Coffee",price:25,img:"https://images.unsplash.com/photo-1511920170033-f8396924c348"},
-{name:"Rice",price:50,img:"https://images.unsplash.com/photo-1604908177522-4325c70bfa36"}
+/* USERS */
+const usersDB=[
+{username:"vedanti",password:"vedanti01",role:"user"},
+{username:"ishwari",password:"ishwari16",role:"admin"}
 ];
 
-/* MENU */
-foods.forEach((f,i)=>{
- menuList.innerHTML+=`
- <div class="card">
- <img src="${f.img}">
- <h3>${f.name}</h3>
- <p>₹${f.price}</p>
- <button class="add" onclick="add(${i})">Add</button>
- </div>`;
-});
+let user=null,cart=[],currentCanteen="",lastOrder=null;
 
-function add(i){cart.push(foods[i]);update();save();}
+/* LOGIN FIXED */
+function doLogin(){
+ let u=document.getElementById("loginUsername").value.trim();
+ let p=document.getElementById("loginPassword").value.trim();
 
-/* CART */
-function renderCart(){
- let t=0;cartItems.innerHTML="";
- cart.forEach((item,i)=>{
-  t+=item.price;
-  cartItems.innerHTML+=`
-  <div class="glass">
-  ${item.name} ₹${item.price}
-  <button class="remove" onclick="remove(${i})">X</button>
-  </div>`;
- });
- total.innerText=t;
-}
+ let found=usersDB.find(x=>x.username===u && x.password===p);
 
-function remove(i){cart.splice(i,1);update();renderCart();save();}
+ if(!found){alert("Wrong login ❌");return;}
 
-/* PAYMENT */
-function payOpen(){
- if(cart.length===0)return;
- paymentModal.style.display="flex";
- qr.style.display="none";
- payText.innerText="";
-}
+ user=found;
 
-function pay(mode){
- payText.innerText="Processing...";
- if(mode==="UPI")qr.style.display="block";
- setTimeout(()=>done(mode),2000);
-}
+ document.getElementById("loginBox").style.display="none";
+ document.getElementById("mainApp").style.display="block";
 
-function done(mode){
- lastOrder={
-  canteen:currentCanteen,
-  time:new Date().toLocaleString(),
-  hour:new Date().getHours(),
-  mode,
-  items:[...cart],
-  total:cart.reduce((a,b)=>a+b.price,0)
- };
- ordersData.push(lastOrder);
-
- cart=[];
- update();
- save();
-
- paymentModal.style.display="none";
- show("bill");
-}
-
-/* BILL */
-function renderBill(){
- if(!lastOrder)return;
- billName.innerText=lastOrder.canteen;
- time.innerText=lastOrder.time;
- mode.innerText=lastOrder.mode;
- billTotal.innerText=lastOrder.total;
-
- billItems.innerHTML="";
- lastOrder.items.forEach(i=>{
-  billItems.innerHTML+=`${i.name} ₹${i.price}<br>`;
- });
-}
-
-/* ADMIN */
-function renderAdmin(){
- orders.innerHTML="";
- ordersData.forEach(o=>{
-  orders.innerHTML+=`
-  <div class="glass">
-  ${o.time}<br>${o.mode}<br>Total ₹${o.total}
-  </div>`;
- });
-}
-
-/* 📊 INSIGHTS */
-function calculateInsights(){
-
- if(ordersData.length===0){
-  busyTime.innerText="No data yet";
-  topFood.innerText="No data";
-  prediction.innerText="Order to generate data";
-  busyLevel.innerText="--";
-  return;
+ if(user.role==="admin"){
+  document.getElementById("adminBtn").style.display="inline-block";
+  document.getElementById("cartBtn").style.display="none";
+  document.getElementById("billBtn").style.display="none";
  }
 
- let foodCount={},timeCount={};
-
- ordersData.forEach(o=>{
-  let slot=o.hour<12?"Morning":o.hour<17?"Afternoon":"Evening";
-  timeCount[slot]=(timeCount[slot]||0)+1;
-
-  o.items.forEach(i=>{
-   foodCount[i.name]=(foodCount[i.name]||0)+1;
-  });
- });
-
- let top=Object.keys(foodCount).reduce((a,b)=>foodCount[a]>foodCount[b]?a:b);
- let busy=Object.keys(timeCount).reduce((a,b)=>timeCount[a]>timeCount[b]?a:b);
-
- busyTime.innerText=busy;
- topFood.innerText=top;
-
- busyLevel.innerText=timeCount[busy]>5?"HIGH 🔥":"MEDIUM";
-
- prediction.innerText=`Try ${top} during ${busy}`;
+ showSection("home");
 }
 
+function logout(){location.reload();}
+
 /* NAV */
-function show(id){
- document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
- document.getElementById(id).classList.add("active");
+function showSection(id){
+ if(!user)return;
+ document.querySelectorAll("section").forEach(s=>s.style.display="none");
+ if(user.role==="user" && id==="admin")return;
+ document.getElementById(id).style.display="block";
 
  if(id==="cart")renderCart();
  if(id==="bill")renderBill();
  if(id==="admin")renderAdmin();
 }
 
-/* COUNT */
-function update(){count.innerText=cart.length}
+/* MENU */
+const foods=[
+{name:"Burger",price:40,img:"https://images.unsplash.com/photo-1550547660-d9450f859349"},
+{name:"Pizza",price:60,img:"https://images.unsplash.com/photo-1601924582975-7e67069c62b6"},
+{name:"Samosa",price:15,img:"https://images.unsplash.com/photo-1601050690597-df0568f70950"},
+{name:"Tea",price:10,img:"https://images.unsplash.com/photo-1509042239860-f550ce710b93"},
 
-/* INIT */
-load();
+// NEW ITEMS 🚀
+{name:"Vada Pav",price:20,img:"https://images.unsplash.com/photo-1604908176997-125f25cc6b54"},
+{name:"Sandwich",price:30,img:"https://images.unsplash.com/photo-1554433607-66b5efe9d304"},
+{name:"Cold Coffee",price:35,img:"https://images.unsplash.com/photo-1509042239860-f550ce710b93"},
+{name:"Maggi",price:25,img:"https://images.unsplash.com/photo-1604908177522-4325c70bfa36"},
+{name:"Pasta",price:50,img:"https://images.unsplash.com/photo-1525755662778-989d0524087e"},
+{name:"French Fries",price:40,img:"https://images.unsplash.com/photo-1541592106381-b31e9677c0e5"},
+{name:"Dosa",price:45,img:"https://images.unsplash.com/photo-1589301760014-d929f3979dbc"},
+{name:"Idli",price:30,img:"https://images.unsplash.com/photo-1589302168068-964664d93dc0"},
+{name:"Paneer Roll",price:55,img:"https://images.unsplash.com/photo-1604908176997-125f25cc6b54"},
+{name:"Chocolate Shake",price:45,img:"https://images.unsplash.com/photo-1572490122747-3968b75cc699"}
+];
+
+foods.forEach((f,i)=>{
+ menuList.innerHTML+=`<div class="card"><img src="${f.img}"><h3>${f.name}</h3><p>₹${f.price}</p><button onclick="add(${i})">Add</button></div>`;
+});
+
+function add(i){
+ if(!currentCanteen){alert("Select canteen first ❌");return;}
+ cart.push(foods[i]);
+ document.getElementById("count").innerText=cart.length;
+}
+
+function renderCart(){
+ let t=0,html="";
+ cart.forEach(i=>{t+=i.price;html+=`<div class="glass">${i.name} ₹${i.price}</div>`;});
+ cartItems.innerHTML=html;
+ total.innerText=t;
+}
+
+/* PAYMENT */
+function pay(){
+ if(cart.length===0)return;
+
+ let name=prompt("Enter Name");
+ let mobile=prompt("Enter Mobile");
+ let payment=confirm("Payment Done?")?"Done":"Pending";
+
+ lastOrder={name,mobile,payment,canteen:currentCanteen,hour:new Date().getHours(),items:[...cart],total:cart.reduce((a,b)=>a+b.price,0)};
+
+ let data=JSON.parse(localStorage.getItem("orders"))||[];
+ data.push(lastOrder);
+ localStorage.setItem("orders",JSON.stringify(data));
+
+ cart=[];
+ document.getElementById("count").innerText=0;
+
+ updateInsights();
+ showSection("bill");
+ renderBill();
+}
+
+function renderBill(){
+ if(!lastOrder)return;
+ billContent.innerHTML=`Name:${lastOrder.name}<br>Mobile:${lastOrder.mobile}<br>Payment:${lastOrder.payment}<br><br>${lastOrder.items.map(i=>i.name+" ₹"+i.price).join("<br>")}<br><br>Total ₹${lastOrder.total}`;
+}
+
+function downloadPDF(){
+ let w=window.open();
+ w.document.write("<pre>"+billContent.innerText+"</pre>");
+ w.print();
+}
+
+/* INSIGHTS */
+function updateInsights(){
+ if(!currentCanteen)return;
+
+ let data=JSON.parse(localStorage.getItem("orders"))||[];
+ let f=data.filter(o=>o.canteen===currentCanteen);
+ if(f.length===0)return;
+
+ let fc={},tc={};
+ f.forEach(o=>{
+  let slot=o.hour<12?"Morning":o.hour<17?"Afternoon":"Evening";
+  tc[slot]=(tc[slot]||0)+1;
+  o.items.forEach(i=>fc[i.name]=(fc[i.name]||0)+1);
+ });
+
+ let top=Object.keys(fc).reduce((a,b)=>fc[a]>fc[b]?a:b);
+ let busy=Object.keys(tc).reduce((a,b)=>tc[a]>tc[b]?a:b);
+ let level=tc[busy]>5?"HIGH 🔥":"MEDIUM";
+
+ busyTime.innerText=busy;
+ busyLevel.innerText=level;
+ topFood.innerText=top;
+ prediction.innerText=`Try ${top} during ${busy}`;
+
+ busyTimeAdmin.innerText=busy;
+ busyLevelAdmin.innerText=level;
+ topFoodAdmin.innerText=top;
+ predictionAdmin.innerText=`Try ${top} during ${busy}`;
+}
+
+/* ADMIN */
+function renderAdmin(){
+ let data=JSON.parse(localStorage.getItem("orders"))||[];
+ let f=data.filter(o=>o.canteen===currentCanteen);
+
+ orders.innerHTML="";
+ if(f.length===0){orders.innerHTML="No orders";return;}
+
+ let fc={};
+ f.forEach(o=>o.items.forEach(i=>fc[i.name]=(fc[i.name]||0)+1));
+
+ let top=Object.keys(fc).reduce((a,b)=>fc[a]>fc[b]?a:b);
+ shortageFood.innerText=top+" ⚠️ High Demand";
+
+ f.forEach(o=>{
+  orders.innerHTML+=`<div class="glass">👤 ${o.name} (${o.mobile})<br>💳 ${o.payment}<br>🍽️ ${o.items.map(i=>i.name).join(", ")}<br>₹${o.total}</div>`;
+ });
+}
+
+/* SUPPORT */
+function sendSupport(){
+ let name=supportName.value;
+ let email=supportEmail.value;
+ let msg=supportMsg.value;
+
+ if(!name||!email||!msg){alert("Fill all fields ❌");return;}
+
+ window.location.href=`mailto:yourcanteen@gmail.com?subject=Support&body=${name} ${email} ${msg}`;
+}
+
+function setCanteen(){
+ currentCanteen=canteenSelect.value;
+ title.innerText="🍽️ "+currentCanteen+" Canteen";
+ updateInsights();
+}
 
 </script>
 
